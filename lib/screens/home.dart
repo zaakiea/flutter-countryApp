@@ -11,12 +11,22 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late Future<List<Country>> countries;
+  late Future<List<Country>> _countriesFuture;
+  List<Country> _allCountries = [];
+  List<Country> _filteredCountries = [];
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    countries = fetchCountries();
+    _countriesFuture = fetchCountries();
+    _searchController.addListener(_filterCountries);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<List<Country>> fetchCountries() async {
@@ -27,52 +37,82 @@ class _HomePageState extends State<HomePage> {
     if (response.statusCode == 200) {
       final respBody = await response.transform(utf8.decoder).join();
       final List<dynamic> jsonData = jsonDecode(respBody);
-      return jsonData.map((j) => Country.fromJson(j)).toList();
+      _allCountries = jsonData.map((j) => Country.fromJson(j)).toList();
+      _filteredCountries = _allCountries;
+      return _allCountries;
     } else {
       throw Exception('Failed to load countries: ${response.statusCode}');
     }
+  }
+
+  void _filterCountries() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredCountries = _allCountries.where((country) {
+        final countryName = country.name.toLowerCase();
+        final regionName = country.region.toLowerCase();
+        return countryName.contains(query) || regionName.contains(query);
+      }).toList();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Countries')),
-      body: FutureBuilder<List<Country>>(
-        future: countries,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No countries found'));
-          }
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                labelText: 'Search by country or continent',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.search),
+              ),
+            ),
+          ),
+          Expanded(
+            child: FutureBuilder<List<Country>>(
+              future: _countriesFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No countries found'));
+                }
 
-          final list = snapshot.data!;
-          return ListView.builder(
-            itemCount: list.length,
-            itemBuilder: (context, i) {
-              final country = list[i];
-              return Card(
-                child: ListTile(
-                  leading: country.flagsPng != null
-                      ? Image.network(country.flagsPng!, width: 50)
-                      : const SizedBox(width: 50),
-                  title: Text(country.name),
-                  subtitle: Text(country.region),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DetailPage(country: country),
+                return ListView.builder(
+                  itemCount: _filteredCountries.length,
+                  itemBuilder: (context, i) {
+                    final country = _filteredCountries[i];
+                    return Card(
+                      child: ListTile(
+                        leading: country.flagsPng != null
+                            ? Image.network(country.flagsPng!, width: 50)
+                            : const SizedBox(width: 50),
+                        title: Text(country.name),
+                        subtitle: Text(country.region),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  DetailPage(country: country),
+                            ),
+                          );
+                        },
                       ),
                     );
                   },
-                ),
-              );
-            },
-          );
-        },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

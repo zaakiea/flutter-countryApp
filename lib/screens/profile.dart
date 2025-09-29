@@ -10,7 +10,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final List<Map<String, String>> teamMembers = [
-    {'Nama': 'Sanggul Rotua Pakpahan', 'NIM': '21120122120018'},
+    {'Nama': 'Dzaki Eka Atmaja', 'NIM': '21120123130068'},
   ];
 
   @override
@@ -36,7 +36,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     fit: BoxFit.cover,
                     alignment: Alignment.topCenter,
                     image: NetworkImage(
-                      'https://cdn.myanimelist.net/s/common/uploaded_files/1444014275-106dee95104209bb9436d6df2b6d5145.jpeg',
+                      'https://raw.githubusercontent.com/IMPHNEN/.github/main/profile/banner.png',
                     ),
                   ),
                 ),
@@ -55,7 +55,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     image: DecorationImage(
                       fit: BoxFit.cover,
                       image: NetworkImage(
-                        'https://avatars.githubusercontent.com/SanggulRotuaPakpahan',
+                        'https://i.pinimg.com/736x/67/67/45/676745f2e336e5f4dbe554e2c113652c.jpg',
                       ),
                     ),
                   ),
